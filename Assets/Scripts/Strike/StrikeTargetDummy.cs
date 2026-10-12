@@ -5,7 +5,6 @@ namespace Strike
 {
     public class StrikeHUD : MonoBehaviour
     {
-        private Canvas canvas;
         private Text healthText;
         private Text stateText;
         private Text timerText;
@@ -14,7 +13,7 @@ namespace Strike
         private void Awake()
         {
             SetupCanvas();
-            SetupText();
+            SetupTexts();
         }
 
         private void Update()
@@ -52,14 +51,14 @@ namespace Strike
 
         private void SetupCanvas()
         {
-            canvas = gameObject.GetComponent<Canvas>();
+            Canvas canvas = GetComponent<Canvas>();
             if (canvas == null)
             {
                 canvas = gameObject.AddComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             }
 
-            var scaler = gameObject.GetComponent<CanvasScaler>();
+            CanvasScaler scaler = GetComponent<CanvasScaler>();
             if (scaler == null)
             {
                 scaler = gameObject.AddComponent<CanvasScaler>();
@@ -67,38 +66,37 @@ namespace Strike
                 scaler.referenceResolution = new Vector2(1920f, 1080f);
             }
 
-            var graphics = gameObject.GetComponent<GraphicRaycaster>();
-            if (graphics == null)
+            if (GetComponent<GraphicRaycaster>() == null)
             {
                 gameObject.AddComponent<GraphicRaycaster>();
             }
         }
 
-        private void SetupText()
+        private void SetupTexts()
         {
-            healthText = CreateText("HealthText", new Vector2(30f, -30f), 24, new Color(0.9f, 0.95f, 1f));
-            stateText = CreateText("StateText", new Vector2(30f, -90f), 20, new Color(0.85f, 0.85f, 1f));
-            timerText = CreateText("TimerText", new Vector2(30f, -150f), 20, new Color(0.85f, 0.85f, 1f));
+            healthText = CreateText("HealthText", new Vector2(30f, -30f), 24, new Color(0.9f, 0.95f, 1f), TextAnchor.UpperLeft);
+            stateText = CreateText("StateText", new Vector2(30f, -90f), 20, new Color(0.85f, 0.85f, 1f), TextAnchor.UpperLeft);
+            timerText = CreateText("TimerText", new Vector2(30f, -150f), 20, new Color(0.85f, 0.85f, 1f), TextAnchor.UpperLeft);
         }
 
-        private Text CreateText(string name, Vector2 position, int fontSize, Color color)
+        private Text CreateText(string name, Vector2 anchoredPosition, int fontSize, Color color, TextAnchor alignment)
         {
             var textObject = new GameObject(name);
             textObject.transform.SetParent(transform);
 
-            var rect = textObject.AddComponent<RectTransform>();
+            RectTransform rect = textObject.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = position;
+            rect.anchoredPosition = anchoredPosition;
             rect.sizeDelta = new Vector2(500f, 60f);
 
-            var text = textObject.AddComponent<Text>();
+            Text text = textObject.AddComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            text.text = name.StartsWith("Health") ? "Health: 100%" : "State: Active";
+            text.text = "";
             text.fontSize = fontSize;
             text.color = color;
-            text.alignment = TextAnchor.UpperLeft;
+            text.alignment = alignment;
             return text;
         }
     }

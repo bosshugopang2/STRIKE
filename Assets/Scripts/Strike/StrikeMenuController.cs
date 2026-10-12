@@ -2,50 +2,48 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeMenuController : MonoBehaviour
+    public class StrikeMobileInputController : MonoBehaviour
     {
-        public enum MenuScreen
+        private Vector2 moveVector;
+        private Vector2 lookVector;
+        private bool firePressed;
+
+        public Vector2 MoveVector => moveVector;
+        public Vector2 LookVector => lookVector;
+        public bool FirePressed => firePressed;
+
+        private void Update()
         {
-            Main,
-            Match,
-            Pause,
-            Results
-        }
-
-        [SerializeField] private MenuScreen currentScreen = MenuScreen.Main;
-        [SerializeField] private bool isPaused;
-
-        public MenuScreen CurrentScreen => currentScreen;
-
-        public void ShowMainMenu()
-        {
-            currentScreen = MenuScreen.Main;
-            isPaused = false;
-        }
-
-        public void StartMatch()
-        {
-            currentScreen = MenuScreen.Match;
-            isPaused = false;
-            var manager = FindObjectOfType<StrikeGameManager>();
-            if (manager != null)
+            if (!StrikeInputManager.IsTouchMode())
             {
-                manager.SetState(StrikeMatchState.Active);
+                moveVector = Vector2.zero;
+                lookVector = Vector2.zero;
+                firePressed = false;
+                return;
             }
-        }
 
-        public void TogglePause()
-        {
-            isPaused = !isPaused;
-            currentScreen = isPaused ? MenuScreen.Pause : MenuScreen.Match;
-            Time.timeScale = isPaused ? 0f : 1f;
-        }
+            if (Input.touchCount > 0)
+            {
+                Touch primaryTouch = Input.GetTouch(0);
+                moveVector = new Vector2(primaryTouch.deltaPosition.x, primaryTouch.deltaPosition.y).normalized;
 
-        public void ShowResults()
-        {
-            currentScreen = MenuScreen.Results;
-            isPaused = true;
-            Time.timeScale = 0f;
+                if (primaryTouch.phase == TouchPhase.Began || primaryTouch.phase == TouchPhase.Moved)
+                {
+                    firePressed = primaryTouch.position.x > Screen.width * 0.5f;
+                }
+                else
+                {
+                    firePressed = false;
+                }
+
+                lookVector = new Vector2(primaryTouch.deltaPosition.x * 0.2f, primaryTouch.deltaPosition.y * 0.2f);
+            }
+            else
+            {
+                moveVector = Vector2.zero;
+                lookVector = Vector2.zero;
+                firePressed = false;
+            }
         }
     }
 }

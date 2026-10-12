@@ -2,72 +2,68 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeInputManager
+    public enum StrikeMatchState
     {
-        public static Vector2 MoveInput()
+        Waiting,
+        Active,
+        Won,
+        Lost
+    }
+
+    public class StrikeGameManager : MonoBehaviour
+    {
+        [SerializeField] private StrikeMatchState matchState = StrikeMatchState.Active;
+        [SerializeField] private float roundTime = 180f;
+
+        private float elapsedTime;
+        private StrikeHUD hud;
+
+        private void Start()
         {
-            Vector2 keyboardInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-            if (keyboardInput.sqrMagnitude > 0.01f)
-            {
-                return keyboardInput;
-            }
-
-            if (IsTouchMode())
-            {
-                var touchController = Object.FindObjectOfType<StrikeMobileInputController>();
-                if (touchController != null)
-                {
-                    return touchController.MoveVector;
-                }
-            }
-
-            return Vector2.zero;
+            hud = FindObjectOfType<StrikeHUD>();
+            elapsedTime = 0f;
+            matchState = StrikeMatchState.Active;
+            UpdateHud();
         }
 
-        public static Vector2 LookInput()
+        private void Update()
         {
-            Vector2 mouseLook = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-            if (mouseLook.sqrMagnitude > 0.01f)
+            if (matchState != StrikeMatchState.Active)
             {
-                return mouseLook;
+                return;
             }
 
-            if (IsTouchMode())
+            elapsedTime += Time.deltaTime;
+            if (elapsedTime >= roundTime)
             {
-                var touchController = Object.FindObjectOfType<StrikeMobileInputController>();
-                if (touchController != null)
-                {
-                    return touchController.LookVector;
-                }
+                SetState(StrikeMatchState.Won);
             }
 
-            return Vector2.zero;
+            UpdateHud();
         }
 
-        public static bool FirePressed()
+        public void SetState(StrikeMatchState state)
         {
-            if (Input.GetButtonDown("Fire1") || Input.GetMouseButtonDown(0))
-            {
-                return true;
-            }
-
-            if (IsTouchMode())
-            {
-                var touchController = Object.FindObjectOfType<StrikeMobileInputController>();
-                return touchController != null && touchController.FirePressed;
-            }
-
-            return false;
+            matchState = state;
+            UpdateHud();
         }
 
-        public static bool JumpPressed()
+        public StrikeMatchState MatchState => matchState;
+
+        public void RegisterPlayerDeath()
         {
-            return Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.Space);
+            if (matchState == StrikeMatchState.Active)
+            {
+                SetState(StrikeMatchState.Lost);
+            }
         }
 
-        public static bool IsTouchMode()
+        private void UpdateHud()
         {
-            return Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.WebGLPlayer;
+            if (hud != null)
+            {
+                hud.UpdateMatchState(matchState, roundTime - elapsedTime);
+            }
         }
     }
 }

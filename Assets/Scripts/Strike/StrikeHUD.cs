@@ -42,14 +42,14 @@ namespace Strike
             }
         }
 
+        public float CurrentHealth => currentHealth;
+        public float MaxHealth => maxHealth;
+
         public void Heal(float amount)
         {
             currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
             NotifyHealthChanged();
         }
-
-        public float CurrentHealth => currentHealth;
-        public float MaxHealth => maxHealth;
 
         private void Die()
         {

@@ -15,7 +15,6 @@ namespace Strike
         private Camera playerCamera;
         private Vector3 velocity;
         private float pitch;
-        private bool isGrounded;
 
         private void Awake()
         {
@@ -34,7 +33,7 @@ namespace Strike
             {
                 cameraPivot = new GameObject("CameraPivot").transform;
                 cameraPivot.SetParent(transform);
-                cameraPivot.localPosition = new Vector3(0f, 0.6f, 0f);
+                cameraPivot.localPosition = new Vector3(0f, 0.7f, 0f);
             }
 
             if (playerCamera == null)
@@ -61,24 +60,24 @@ namespace Strike
 
         private void HandleMovement()
         {
-            isGrounded = controller.isGrounded;
+            bool grounded = controller.isGrounded;
 
-            Vector2 moveInput = StrikeInputManager.MoveInput();
-            Vector3 movement = new Vector3(moveInput.x, 0f, moveInput.y);
-            movement = transform.TransformDirection(movement).normalized;
+            Vector2 input = StrikeInputManager.MoveInput();
+            Vector3 move = new Vector3(input.x, 0f, input.y);
+            move = transform.TransformDirection(move).normalized;
 
-            if (isGrounded && velocity.y < 0f)
+            if (grounded && velocity.y < 0f)
             {
                 velocity.y = -2f;
             }
 
-            if (StrikeInputManager.JumpPressed() && isGrounded)
+            if (StrikeInputManager.JumpPressed() && grounded)
             {
                 velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
             }
 
-            velocity.x = movement.x * moveSpeed;
-            velocity.z = movement.z * moveSpeed;
+            velocity.x = move.x * moveSpeed;
+            velocity.z = move.z * moveSpeed;
             velocity.y += gravity * Time.deltaTime;
 
             controller.Move(velocity * Time.deltaTime);
@@ -86,7 +85,7 @@ namespace Strike
 
         private void HandleLook()
         {
-            if (playerCamera == null)
+            if (playerCamera == null || cameraPivot == null)
             {
                 return;
             }

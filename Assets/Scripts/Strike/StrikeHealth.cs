@@ -49,6 +49,11 @@ namespace Strike
             weaponOrigin = origin;
         }
 
+        public string GetAmmoText()
+        {
+            return currentAmmo + "/" + clipSize;
+        }
+
         private void Fire()
         {
             if (isReloading || currentAmmo <= 0)

@@ -2,18 +2,39 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeSessionConfig : ScriptableObject
+    public class StrikePlayerStats : MonoBehaviour
     {
-        [SerializeField] private string sessionName = "STRIKE Lobby";
-        [SerializeField] private string mapName = "Arena_01";
-        [SerializeField] private int maxPlayers = 8;
-        [SerializeField] private bool enableMobileControls = true;
-        [SerializeField] private bool enableWebGLBuild = true;
+        [SerializeField] private int score;
+        [SerializeField] private int kills;
+        [SerializeField] private int deaths;
+        [SerializeField] private int assists;
 
-        public string SessionName => sessionName;
-        public string MapName => mapName;
-        public int MaxPlayers => maxPlayers;
-        public bool EnableMobileControls => enableMobileControls;
-        public bool EnableWebGLBuild => enableWebGLBuild;
+        public int Score => score;
+        public int Kills => kills;
+        public int Deaths => deaths;
+        public int Assists => assists;
+
+        public void AddScore(int amount)
+        {
+            score += amount;
+        }
+
+        public void AddKill()
+        {
+            kills++;
+            score += 100;
+        }
+
+        public void AddDeath()
+        {
+            deaths++;
+            score = Mathf.Max(0, score - 25);
+        }
+
+        public void AddAssist()
+        {
+            assists++;
+            score += 50;
+        }
     }
 }
