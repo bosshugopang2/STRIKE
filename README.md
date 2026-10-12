@@ -1,20 +1,23 @@
 # STRIKE
 
-3D multiplayer first-person shooter for mobile and web, built on Unity.
+3D multiplayer first-person shooter game for mobile devices (iOS, Android) and web created on Unity.
 
-## Overview
-This repository is being scaffolded as the foundation for the STRIKE game project. It includes a Unity-ready folder structure, package manifest, and starter scripts for a basic player controller and runtime bootstrap.
+STRIKE is a rebranded foundation for a mobile-friendly FPS prototype inspired by fast arcade shooter gameplay.
 
-## Getting started
-1. Install Unity Hub and Unity 2022.3 LTS (or a compatible version).
-2. Open this folder as a Unity project.
-3. In the Unity editor, create or open a `Boot` scene and attach `Strike.GameBootstrap` to an empty GameObject.
-4. Press Play to validate the starter setup.
+## Project status
+This repository now includes a Unity-ready starter foundation for a first-person shooter prototype with:
+- game bootstrap and scene setup
+- player controller with keyboard/mouse and mobile-friendly input abstraction
+- weapon firing system
+- enemy/target dummy behavior
+- health and damage logic
+- HUD and match state management
 
-## Project structure
-- `Assets/` - Game assets and scripts
-- `Packages/` - Unity package manifest
-- `ProjectSettings/` - Project configuration
+## Included structure
+- `Assets/Scripts/Strike/` - main gameplay systems and controllers
+- `Assets/Scripts/Strike/Boot/` - bootstrap logic
+- `Packages/manifest.json` - Unity package configuration
+- `ProjectSettings/ProjectVersion.txt` - Unity project version
 
 ## Notes
-This is a starter foundation for a mobile/web FPS prototype. It is intentionally minimal and can be expanded with networking, game state, weapon systems, and UI.
+This is intentionally a playable foundation rather than a finished commercial game. It is designed to be expanded into a full mobile/web FPS with lobby flow, networking, weapon variety, and game modes.
