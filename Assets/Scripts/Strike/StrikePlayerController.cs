@@ -2,74 +2,106 @@ using UnityEngine;
 
 namespace Strike
 {
-    public static class StrikeInputManager
+    public class StrikePlayerController : MonoBehaviour
     {
-        public static Vector2 MoveInput()
+        [SerializeField] private float moveSpeed = 6f;
+        [SerializeField] private float gravity = -25f;
+        [SerializeField] private float jumpForce = 7f;
+        [SerializeField] private float lookSensitivity = 2.2f;
+        [SerializeField] private float pitchClamp = 85f;
+
+        private CharacterController controller;
+        private Transform cameraPivot;
+        private Camera playerCamera;
+        private Vector3 velocity;
+        private float pitch;
+
+        private void Awake()
         {
-            Vector2 keyboard = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-            if (keyboard.sqrMagnitude > 0.01f)
+            controller = GetComponent<CharacterController>();
+        }
+
+        private void Update()
+        {
+            HandleMovement();
+            HandleLook();
+        }
+
+        public void SetCameraRig()
+        {
+            if (cameraPivot == null)
             {
-                return keyboard;
+                cameraPivot = new GameObject("CameraPivot").transform;
+                cameraPivot.SetParent(transform);
+                cameraPivot.localPosition = new Vector3(0f, 0.7f, 0f);
             }
 
-            if (IsTouchMode())
+            if (playerCamera == null)
             {
-                var controller = Object.FindObjectOfType<StrikeMobileInputController>();
-                if (controller != null)
+                playerCamera = Camera.main;
+                if (playerCamera == null)
                 {
-                    return controller.MoveVector;
+                    var cameraObject = new GameObject("Main Camera");
+                    cameraObject.tag = "MainCamera";
+                    cameraObject.transform.SetParent(cameraPivot);
+                    cameraObject.transform.localPosition = new Vector3(0f, 0.3f, 0.2f);
+                    playerCamera = cameraObject.AddComponent<Camera>();
+                    cameraObject.AddComponent<AudioListener>();
                 }
             }
 
-            return Vector2.zero;
+            if (playerCamera != null)
+            {
+                playerCamera.transform.SetParent(cameraPivot);
+                playerCamera.transform.localPosition = new Vector3(0f, 0.3f, 0.2f);
+                playerCamera.transform.localRotation = Quaternion.identity;
+            }
         }
 
-        public static Vector2 LookInput()
+        public void JumpForMobile()
         {
-            Vector2 mouseLook = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-            if (mouseLook.sqrMagnitude > 0.01f)
+            if (controller != null && controller.isGrounded)
             {
-                return mouseLook;
+                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
             }
-
-            if (IsTouchMode())
-            {
-                var controller = Object.FindObjectOfType<StrikeMobileInputController>();
-                if (controller != null)
-                {
-                    return controller.LookVector;
-                }
-            }
-
-            return Vector2.zero;
         }
 
-        public static bool FirePressed()
+        private void HandleMovement()
         {
-            if (Input.GetButtonDown("Fire1") || Input.GetMouseButtonDown(0))
+            bool grounded = controller.isGrounded;
+            Vector2 input = StrikeInputManager.MoveInput();
+            Vector3 move = new Vector3(input.x, 0f, input.y);
+            move = transform.TransformDirection(move).normalized;
+
+            if (grounded && velocity.y < 0f)
             {
-                return true;
+                velocity.y = -2f;
             }
 
-            if (IsTouchMode())
+            if (StrikeInputManager.JumpPressed() && grounded)
             {
-                var controller = Object.FindObjectOfType<StrikeMobileInputController>();
-                return controller != null && controller.FirePressed;
+                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
             }
 
-            return false;
+            velocity.x = move.x * moveSpeed;
+            velocity.z = move.z * moveSpeed;
+            velocity.y += gravity * Time.deltaTime;
+
+            controller.Move(velocity * Time.deltaTime);
         }
 
-        public static bool JumpPressed()
+        private void HandleLook()
         {
-            return Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.Space);
-        }
+            if (playerCamera == null || cameraPivot == null)
+            {
+                return;
+            }
 
-        public static bool IsTouchMode()
-        {
-            return Application.platform == RuntimePlatform.Android ||
-                   Application.platform == RuntimePlatform.IPhonePlayer ||
-                   Application.platform == RuntimePlatform.WebGLPlayer;
+            Vector2 lookInput = StrikeInputManager.LookInput();
+            transform.Rotate(0f, lookInput.x * lookSensitivity, 0f);
+            pitch -= lookInput.y * lookSensitivity;
+            pitch = Mathf.Clamp(pitch, -pitchClamp, pitchClamp);
+            cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
     }
 }

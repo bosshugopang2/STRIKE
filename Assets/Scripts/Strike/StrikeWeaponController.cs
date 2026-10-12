@@ -2,99 +2,112 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikePlayerController : MonoBehaviour
+    public class StrikeWeaponController : MonoBehaviour
     {
-        [SerializeField] private float moveSpeed = 6f;
-        [SerializeField] private float gravity = -25f;
-        [SerializeField] private float jumpForce = 7f;
-        [SerializeField] private float lookSensitivity = 2.2f;
-        [SerializeField] private float pitchClamp = 85f;
+        [SerializeField] private float damage = 25f;
+        [SerializeField] private float fireRate = 0.12f;
+        [SerializeField] private float range = 50f;
+        [SerializeField] private int clipSize = 30;
+        [SerializeField] private int currentAmmo = 30;
+        [SerializeField] private float reloadTime = 1.2f;
 
-        private CharacterController controller;
-        private Transform cameraPivot;
+        private float nextFireTime;
+        private float reloadTimer;
         private Camera playerCamera;
-        private Vector3 velocity;
-        private float pitch;
-
-        private void Awake()
-        {
-            controller = GetComponent<CharacterController>();
-        }
+        private Transform weaponOrigin;
+        private bool isReloading;
 
         private void Update()
         {
-            HandleMovement();
-            HandleLook();
-        }
-
-        public void SetCameraRig()
-        {
-            if (cameraPivot == null)
-            {
-                cameraPivot = new GameObject("CameraPivot").transform;
-                cameraPivot.SetParent(transform);
-                cameraPivot.localPosition = new Vector3(0f, 0.7f, 0f);
-            }
-
             if (playerCamera == null)
             {
                 playerCamera = Camera.main;
-                if (playerCamera == null)
+            }
+
+            if (StrikeInputManager.FirePressed() && Time.time >= nextFireTime)
+            {
+                Fire();
+            }
+
+            if (currentAmmo <= 0 && !isReloading)
+            {
+                StartReload();
+            }
+
+            if (isReloading)
+            {
+                reloadTimer -= Time.deltaTime;
+                if (reloadTimer <= 0f)
                 {
-                    var cameraObject = new GameObject("Main Camera");
-                    cameraObject.tag = "MainCamera";
-                    cameraObject.transform.SetParent(cameraPivot);
-                    cameraObject.transform.localPosition = new Vector3(0f, 0.3f, 0.2f);
-                    playerCamera = cameraObject.AddComponent<Camera>();
-                    cameraObject.AddComponent<AudioListener>();
+                    FinishReload();
                 }
             }
+        }
 
-            if (playerCamera != null)
+        public void SetWeaponOrigin(Transform origin)
+        {
+            weaponOrigin = origin;
+        }
+
+        public void FireForMobile()
+        {
+            if (Time.time >= nextFireTime)
             {
-                playerCamera.transform.SetParent(cameraPivot);
-                playerCamera.transform.localPosition = new Vector3(0f, 0.3f, 0.2f);
-                playerCamera.transform.localRotation = Quaternion.identity;
+                Fire();
             }
         }
 
-        private void HandleMovement()
+        public string GetAmmoText()
         {
-            bool grounded = controller.isGrounded;
-
-            Vector2 input = StrikeInputManager.MoveInput();
-            Vector3 move = new Vector3(input.x, 0f, input.y);
-            move = transform.TransformDirection(move).normalized;
-
-            if (grounded && velocity.y < 0f)
-            {
-                velocity.y = -2f;
-            }
-
-            if (StrikeInputManager.JumpPressed() && grounded)
-            {
-                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
-            }
-
-            velocity.x = move.x * moveSpeed;
-            velocity.z = move.z * moveSpeed;
-            velocity.y += gravity * Time.deltaTime;
-
-            controller.Move(velocity * Time.deltaTime);
+            return currentAmmo + "/" + clipSize;
         }
 
-        private void HandleLook()
+        private void Fire()
         {
-            if (playerCamera == null || cameraPivot == null)
+            if (isReloading || currentAmmo <= 0)
             {
                 return;
             }
 
-            Vector2 lookInput = StrikeInputManager.LookInput();
-            transform.Rotate(0f, lookInput.x * lookSensitivity, 0f);
-            pitch -= lookInput.y * lookSensitivity;
-            pitch = Mathf.Clamp(pitch, -pitchClamp, pitchClamp);
-            cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+            currentAmmo--;
+            nextFireTime = Time.time + fireRate;
+
+            Vector3 rayOrigin = playerCamera != null ? playerCamera.transform.position : transform.position;
+            Vector3 rayDirection = playerCamera != null ? playerCamera.transform.forward : transform.forward;
+
+            if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, range))
+            {
+                var target = hit.collider.GetComponent<StrikeTargetDummy>();
+                if (target != null)
+                {
+                    target.TakeDamage(damage);
+                    var manager = FindObjectOfType<StrikeGameManager>();
+                    if (manager != null)
+                    {
+                        manager.RegisterEnemyDestroyed();
+                    }
+                }
+                else
+                {
+                    var health = hit.collider.GetComponent<StrikeHealth>();
+                    if (health != null)
+                    {
+                        health.TakeDamage(damage);
+                    }
+                }
+            }
+        }
+
+        private void StartReload()
+        {
+            isReloading = true;
+            reloadTimer = reloadTime;
+        }
+
+        private void FinishReload()
+        {
+            currentAmmo = clipSize;
+            isReloading = false;
         }
     }
 }
