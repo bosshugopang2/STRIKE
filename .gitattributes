@@ -1,0 +1,18 @@
+*.cs text eol=lf
+*.shader text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.psd binary
+*.dll binary
+*.exe binary
+*.unity binary
+*.prefab binary
+*.mat binary
