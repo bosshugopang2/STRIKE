@@ -1,28 +1,77 @@
-# STRIKE
+using UnityEngine;
+using UnityEngine.UI;
 
-3D multiplayer first-person shooter game for mobile devices (iOS, Android) and web created on Unity.
+namespace Strike
+{
+    public class StrikeScoreboard : MonoBehaviour
+    {
+        private Text scoreText;
+        private Text enemiesText;
 
-This repository now contains a working starter foundation for a STRIKE FPS prototype with:
-- player movement and camera look
-- rifle shooting and reload logic
-- target/dummy combat
-- scoring and match state management
-- HUD and weapon HUD
-- mobile input abstraction
-- arena setup and game bootstrap
+        private void Awake()
+        {
+            SetupCanvas();
+            SetupTexts();
+        }
 
-## Structure
-- `Assets/Scripts/Strike/` - main gameplay systems
-- `Packages/manifest.json` - Unity package configuration
-- `ProjectSettings/ProjectVersion.txt` - project version
+        private void Update()
+        {
+            var manager = FindObjectOfType<StrikeGameManager>();
+            if (manager == null)
+            {
+                return;
+            }
 
-## Notes
-This is a prototype foundation designed to be expanded into a larger game. It is suitable for iteration toward mobile/web FPS gameplay and further multiplayer development.
+            scoreText.text = "Score: " + manager.Score;
+            enemiesText.text = "Enemies: " + FindObjectsOfType<StrikeEnemyBot>().Length;
+        }
 
-## Recommended next steps
-1. Add a proper Unity scene and scene bootstrap references
-2. Add enemy AI or networked bot logic
-3. Implement lobby and room flow
-4. Add mobile UI screens and touch controls
-5. Prepare WebGL/iOS build settings
+        private void SetupCanvas()
+        {
+            if (GetComponent<Canvas>() == null)
+            {
+                var canvas = gameObject.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            }
 
+            if (GetComponent<CanvasScaler>() == null)
+            {
+                var scaler = gameObject.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+            }
+
+            if (GetComponent<GraphicRaycaster>() == null)
+            {
+                gameObject.AddComponent<GraphicRaycaster>();
+            }
+        }
+
+        private void SetupTexts()
+        {
+            scoreText = CreateText("ScoreText", new Vector2(-180f, -30f), 22, new Color(1f, 0.9f, 0.4f), TextAnchor.UpperRight);
+            enemiesText = CreateText("EnemiesText", new Vector2(-180f, -80f), 18, new Color(0.75f, 0.9f, 1f), TextAnchor.UpperRight);
+        }
+
+        private Text CreateText(string name, Vector2 anchoredPosition, int fontSize, Color color, TextAnchor alignment)
+        {
+            var textObject = new GameObject(name);
+            textObject.transform.SetParent(transform);
+
+            RectTransform rect = textObject.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = new Vector2(250f, 40f);
+
+            var text = textObject.AddComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.text = "";
+            text.fontSize = fontSize;
+            text.color = color;
+            text.alignment = alignment;
+            return text;
+        }
+    }
+}
