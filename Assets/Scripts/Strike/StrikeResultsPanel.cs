@@ -3,27 +3,12 @@ using UnityEngine.UI;
 
 namespace Strike
 {
-    public class StrikeResultsPanel : MonoBehaviour
+    public class StrikeCrosshair : MonoBehaviour
     {
-        private Text titleText;
-        private Text summaryText;
-
         private void Awake()
         {
             SetupCanvas();
-            SetupText();
-        }
-
-        public void ShowResults(bool won, int score, int enemiesLeft)
-        {
-            titleText.text = won ? "VICTORY" : "DEFEAT";
-            summaryText.text = "Score: " + score + "\nEnemies Remaining: " + enemiesLeft;
-            gameObject.SetActive(true);
-        }
-
-        public void HideResults()
-        {
-            gameObject.SetActive(false);
+            SetupReticle();
         }
 
         private void SetupCanvas()
@@ -40,35 +25,31 @@ namespace Strike
             }
         }
 
-        private void SetupText()
+        private void SetupReticle()
         {
-            var titleObject = new GameObject("Title");
-            titleObject.transform.SetParent(transform);
-            var titleRect = titleObject.AddComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0.5f, 0.5f);
-            titleRect.anchorMax = new Vector2(0.5f, 0.5f);
-            titleRect.sizeDelta = new Vector2(400f, 80f);
-            titleRect.anchoredPosition = new Vector2(0f, 60f);
-            titleText = titleObject.AddComponent<Text>();
-            titleText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            titleText.alignment = TextAnchor.MiddleCenter;
-            titleText.fontSize = 40;
-            titleText.color = Color.white;
+            var root = new GameObject("ReticleRoot");
+            root.transform.SetParent(transform);
+            var rect = root.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(40f, 40f);
+            rect.anchoredPosition = Vector2.zero;
 
-            var summaryObject = new GameObject("Summary");
-            summaryObject.transform.SetParent(transform);
-            var summaryRect = summaryObject.AddComponent<RectTransform>();
-            summaryRect.anchorMin = new Vector2(0.5f, 0.5f);
-            summaryRect.anchorMax = new Vector2(0.5f, 0.5f);
-            summaryRect.sizeDelta = new Vector2(420f, 140f);
-            summaryRect.anchoredPosition = new Vector2(0f, -30f);
-            summaryText = summaryObject.AddComponent<Text>();
-            summaryText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            summaryText.alignment = TextAnchor.MiddleCenter;
-            summaryText.fontSize = 22;
-            summaryText.color = Color.white;
+            CreateBar(root.transform, "Horizontal", new Vector2(0f, 0f), new Vector2(20f, 2f));
+            CreateBar(root.transform, "Vertical", new Vector2(0f, 0f), new Vector2(2f, 20f));
+        }
 
-            HideResults();
+        private void CreateBar(Transform parent, string name, Vector2 position, Vector2 size)
+        {
+            var obj = new GameObject(name);
+            obj.transform.SetParent(parent);
+            var rect = obj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = position;
+            var image = obj.AddComponent<Image>();
+            image.color = new Color(1f, 1f, 1f, 0.75f);
         }
     }
 }

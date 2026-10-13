@@ -2,23 +2,28 @@ using UnityEngine;
 
 namespace Strike
 {
-    public enum StrikeState
+    public class StrikeRoundLogic : MonoBehaviour
     {
-        Lobby,
-        Active,
-        Victory,
-        Defeat
-    }
+        [SerializeField] private float roundDuration = 180f;
+        private float remainingTime;
 
-    public class StrikeGameState : MonoBehaviour
-    {
-        [SerializeField] private StrikeState currentState = StrikeState.Lobby;
-
-        public StrikeState CurrentState => currentState;
-
-        public void SetState(StrikeState nextState)
+        private void Start()
         {
-            currentState = nextState;
+            remainingTime = roundDuration;
+        }
+
+        private void Update()
+        {
+            remainingTime -= Time.deltaTime;
+            if (remainingTime <= 0f)
+            {
+                remainingTime = 0f;
+                var manager = FindObjectOfType<StrikeGameManager>();
+                if (manager != null)
+                {
+                    manager.SetState(StrikeMatchState.Won);
+                }
+            }
         }
     }
 }

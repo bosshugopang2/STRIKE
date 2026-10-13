@@ -3,51 +3,103 @@ using UnityEngine.UI;
 
 namespace Strike
 {
-    public class StrikeCrosshair : MonoBehaviour
+    public class StrikeHUD : MonoBehaviour
     {
-        private Image centerDot;
-        private Image horizontalLine;
-        private Image verticalLine;
+        private Text healthText;
+        private Text timerText;
+        private Text stateText;
+        private Text scoreText;
 
         private void Awake()
         {
-            SetupCrosshair();
+            SetupCanvas();
+            SetupText();
         }
 
-        private void SetupCrosshair()
+        private void Update()
         {
-            var canvasObject = new GameObject("CrosshairCanvas");
-            canvasObject.transform.SetParent(transform);
-            var canvas = canvasObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasObject.AddComponent<CanvasScaler>();
-            canvasObject.AddComponent<GraphicRaycaster>();
+            var player = GameObject.FindWithTag("Player");
+            if (player != null)
+            {
+                var health = player.GetComponent<StrikeHealth>();
+                if (health != null)
+                {
+                    healthText.text = "Health: " + Mathf.RoundToInt(health.CurrentHealth) + "%";
+                }
+            }
 
-            var root = new GameObject("CrosshairRoot");
-            root.transform.SetParent(canvasObject.transform);
-            var rect = root.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(60f, 60f);
-
-            centerDot = CreateImage(root.transform, "CenterDot", new Vector2(0f, 0f), new Vector2(6f, 6f), new Color(1f, 1f, 1f, 0.85f));
-            horizontalLine = CreateImage(root.transform, "HorizontalLine", new Vector2(0f, 0f), new Vector2(22f, 2f), new Color(1f, 1f, 1f, 0.8f));
-            verticalLine = CreateImage(root.transform, "VerticalLine", new Vector2(0f, 0f), new Vector2(2f, 22f), new Color(1f, 1f, 1f, 0.8f));
+            var manager = FindObjectOfType<StrikeGameManager>();
+            if (manager != null)
+            {
+                timerText.text = "Time: " + manager.TimeRemaining.ToString("0.0") + "s";
+                stateText.text = "State: " + manager.MatchState;
+                scoreText.text = "Score: " + manager.Score;
+            }
         }
 
-        private Image CreateImage(Transform parent, string name, Vector2 anchorPosition, Vector2 size, Color color)
+        public void UpdateDisplay(StrikeMatchState state, float timeRemaining, int score)
         {
-            var imageObject = new GameObject(name);
-            imageObject.transform.SetParent(parent);
-            var rect = imageObject.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = anchorPosition;
-            var image = imageObject.AddComponent<Image>();
-            image.color = color;
-            return image;
+            if (stateText != null)
+            {
+                stateText.text = "State: " + state;
+            }
+
+            if (timerText != null)
+            {
+                timerText.text = "Time: " + timeRemaining.ToString("0.0") + "s";
+            }
+
+            if (scoreText != null)
+            {
+                scoreText.text = "Score: " + score;
+            }
+        }
+
+        private void SetupCanvas()
+        {
+            if (GetComponent<Canvas>() == null)
+            {
+                var canvas = gameObject.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            }
+
+            if (GetComponent<CanvasScaler>() == null)
+            {
+                var scaler = gameObject.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+            }
+
+            if (GetComponent<GraphicRaycaster>() == null)
+            {
+                gameObject.AddComponent<GraphicRaycaster>();
+            }
+        }
+
+        private void SetupText()
+        {
+            healthText = CreateText("HealthText", new Vector2(30f, -30f), 24, Color.white, TextAnchor.UpperLeft);
+            timerText = CreateText("TimerText", new Vector2(30f, -90f), 20, Color.white, TextAnchor.UpperLeft);
+            stateText = CreateText("StateText", new Vector2(30f, -150f), 20, Color.white, TextAnchor.UpperLeft);
+            scoreText = CreateText("ScoreText", new Vector2(30f, -210f), 20, Color.white, TextAnchor.UpperLeft);
+        }
+
+        private Text CreateText(string name, Vector2 position, int fontSize, Color color, TextAnchor anchor)
+        {
+            var obj = new GameObject(name);
+            obj.transform.SetParent(transform);
+            var rect = obj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = new Vector2(500f, 60f);
+            var text = obj.AddComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.fontSize = fontSize;
+            text.color = color;
+            text.alignment = anchor;
+            return text;
         }
     }
 }

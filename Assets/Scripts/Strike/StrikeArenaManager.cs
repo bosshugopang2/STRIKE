@@ -2,34 +2,49 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeGameBootstrap : MonoBehaviour
+    public class StrikeBootstrap : MonoBehaviour
     {
-        [SerializeField] private Vector3 playerSpawn = new Vector3(0f, 1.2f, 0f);
         [SerializeField] private int botCount = 6;
+        [SerializeField] private Vector3 playerSpawn = new Vector3(0f, 1.2f, 0f);
 
         private void Start()
         {
-            EnsureRig();
+            EnsureCoreSystems();
             EnsureArena();
             EnsurePlayer();
             EnsureBots();
-            EnsureHUD();
+            EnsureUI();
         }
 
-        private void EnsureRig()
+        private void EnsureCoreSystems()
         {
-            if (GameObject.Find("GameRig") == null)
+            if (FindObjectOfType<StrikeGameManager>() == null)
             {
-                var rig = new GameObject("GameRig");
-                rig.AddComponent<StrikeArenaManager>();
-                rig.AddComponent<StrikeMatchUI>();
-                rig.AddComponent<StrikeAudioManager>();
-                rig.AddComponent<StrikePickupSpawner>();
+                var managerObject = new GameObject("GameManager");
+                managerObject.AddComponent<StrikeGameManager>();
+            }
+
+            if (FindObjectOfType<StrikeLobbyManager>() == null)
+            {
+                var lobbyObject = new GameObject("LobbyManager");
+                lobbyObject.AddComponent<StrikeLobbyManager>();
+            }
+
+            if (FindObjectOfType<StrikeMainMenu>() == null)
+            {
+                var menuObject = new GameObject("MainMenu");
+                menuObject.AddComponent<StrikeMainMenu>();
             }
         }
 
         private void EnsureArena()
         {
+            if (FindObjectOfType<StrikeArenaManager>() == null)
+            {
+                var arenaObject = new GameObject("ArenaManager");
+                arenaObject.AddComponent<StrikeArenaManager>();
+            }
+
             var arena = FindObjectOfType<StrikeArenaManager>();
             if (arena != null)
             {
@@ -39,24 +54,26 @@ namespace Strike
 
         private void EnsurePlayer()
         {
-            var player = GameObject.FindWithTag("Player");
-            if (player == null)
+            if (GameObject.FindWithTag("Player") != null)
             {
-                player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                player.name = "Player";
-                player.tag = "Player";
-                player.transform.position = playerSpawn;
-
-                var controller = player.AddComponent<CharacterController>();
-                controller.height = 1.8f;
-                controller.radius = 0.35f;
-                controller.center = new Vector3(0f, 0.9f, 0f);
-
-                player.AddComponent<StrikePlayerController>();
-                player.AddComponent<StrikeWeaponSystem>();
-                player.AddComponent<StrikeHealth>();
-                player.AddComponent<StrikePlayerCameraRig>();
+                return;
             }
+
+            var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            player.name = "Player";
+            player.tag = "Player";
+            player.transform.position = playerSpawn;
+
+            var controller = player.AddComponent<CharacterController>();
+            controller.height = 1.8f;
+            controller.radius = 0.35f;
+            controller.center = new Vector3(0f, 0.9f, 0f);
+
+            player.AddComponent<StrikePlayerController>();
+            player.AddComponent<StrikeWeaponController>();
+            player.AddComponent<StrikeHealth>();
+            player.AddComponent<StrikePlayerCameraRig>();
+            player.AddComponent<StrikeWeaponSwap>();
         }
 
         private void EnsureBots()
@@ -66,38 +83,48 @@ namespace Strike
                 return;
             }
 
-            var spawnPositions = new[]
+            var spawnPoints = new[]
             {
-                new Vector3(7f, 1.2f, 8f),
-                new Vector3(-9f, 1.2f, 7f),
-                new Vector3(8f, 1.2f, -9f),
+                new Vector3(8f, 1.2f, 8f),
+                new Vector3(-9f, 1.2f, 8f),
+                new Vector3(9f, 1.2f, -8f),
                 new Vector3(-8f, 1.2f, -8f),
-                new Vector3(0f, 1.2f, 11f),
-                new Vector3(0f, 1.2f, -11f)
+                new Vector3(0f, 1.2f, 10f),
+                new Vector3(0f, 1.2f, -10f)
             };
 
             for (int i = 0; i < botCount; i++)
             {
                 var bot = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 bot.name = "Bot_" + i;
-                bot.transform.position = spawnPositions[i % spawnPositions.Length];
-
+                bot.transform.position = spawnPoints[i % spawnPoints.Length];
                 var controller = bot.AddComponent<CharacterController>();
                 controller.height = 1.8f;
                 controller.radius = 0.35f;
                 controller.center = new Vector3(0f, 0.9f, 0f);
-
                 bot.AddComponent<StrikeHealth>();
                 bot.AddComponent<StrikeEnemyAI>();
             }
         }
 
-        private void EnsureHUD()
+        private void EnsureUI()
         {
-            if (FindObjectOfType<StrikeMatchUI>() == null)
+            if (FindObjectOfType<StrikeHUD>() == null)
             {
-                var hud = new GameObject("MatchOverlay");
-                hud.AddComponent<StrikeMatchUI>();
+                var hud = new GameObject("HUD");
+                hud.AddComponent<StrikeHUD>();
+            }
+
+            if (FindObjectOfType<StrikeCrosshair>() == null)
+            {
+                var crosshair = new GameObject("Crosshair");
+                crosshair.AddComponent<StrikeCrosshair>();
+            }
+
+            if (FindObjectOfType<StrikeResultsPanel>() == null)
+            {
+                var results = new GameObject("ResultsPanel");
+                results.AddComponent<StrikeResultsPanel>();
             }
         }
     }

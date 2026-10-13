@@ -1,21 +1,23 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Strike
 {
-    public class StrikeSceneLoader : MonoBehaviour
+    public class StrikePlayerCameraRig : MonoBehaviour
     {
-        public void LoadSceneByName(string sceneName)
-        {
-            if (!string.IsNullOrEmpty(sceneName))
-            {
-                SceneManager.LoadScene(sceneName);
-            }
-        }
+        [SerializeField] private Vector3 offset = new Vector3(0f, 0.4f, 0.2f);
 
-        public void ReloadCurrentScene()
+        private void Start()
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            if (Camera.main == null)
+            {
+                var cameraObj = new GameObject("Main Camera");
+                cameraObj.tag = "MainCamera";
+                var camera = cameraObj.AddComponent<Camera>();
+                cameraObj.AddComponent<AudioListener>();
+            }
+
+            Camera.main.transform.SetParent(transform);
+            Camera.main.transform.localPosition = offset;
         }
     }
 }

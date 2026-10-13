@@ -4,14 +4,13 @@ namespace Strike
 {
     public class StrikeArenaManager : MonoBehaviour
     {
-        [SerializeField] private int wallCount = 4;
-        [SerializeField] private Vector3 arenaScale = new Vector3(20f, 1f, 20f);
+        [SerializeField] private Vector3 arenaSize = new Vector3(20f, 1f, 20f);
 
         public void BuildArena()
         {
             EnsureGround();
-            EnsureBoundaries();
-            EnsurePickupZones();
+            EnsureWalls();
+            EnsurePickupZone();
         }
 
         private void EnsureGround()
@@ -24,17 +23,17 @@ namespace Strike
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
             ground.transform.position = Vector3.zero;
-            ground.transform.localScale = arenaScale;
+            ground.transform.localScale = arenaSize;
             var renderer = ground.GetComponent<Renderer>();
             if (renderer != null)
             {
-                renderer.material.color = new Color(0.12f, 0.18f, 0.12f);
+                renderer.material.color = new Color(0.12f, 0.16f, 0.12f);
             }
         }
 
-        private void EnsureBoundaries()
+        private void EnsureWalls()
         {
-            Vector3[] wallPositions =
+            var wallPositions = new[]
             {
                 new Vector3(0f, 2f, 20f),
                 new Vector3(0f, 2f, -20f),
@@ -42,39 +41,43 @@ namespace Strike
                 new Vector3(-20f, 2f, 0f)
             };
 
-            for (int i = 0; i < wallCount; i++)
+            for (int i = 0; i < wallPositions.Length; i++)
             {
-                var name = "Wall_" + i;
-                if (GameObject.Find(name) != null)
+                var wallName = "ArenaWall_" + i;
+                if (GameObject.Find(wallName) != null)
                 {
                     continue;
                 }
 
                 var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                wall.name = name;
+                wall.name = wallName;
                 wall.transform.position = wallPositions[i];
                 wall.transform.localScale = new Vector3(40f, 4f, 1f);
                 var renderer = wall.GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    renderer.material.color = new Color(0.28f, 0.28f, 0.34f);
+                    renderer.material.color = new Color(0.32f, 0.32f, 0.38f);
                 }
             }
         }
 
-        private void EnsurePickupZones()
+        private void EnsurePickupZone()
         {
             if (GameObject.Find("PickupZone") != null)
             {
                 return;
             }
 
-            var zone = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            zone.name = "PickupZone";
-            zone.transform.position = new Vector3(0f, 0.2f, 0f);
-            zone.transform.localScale = new Vector3(4f, 0.2f, 4f);
-            zone.GetComponent<Renderer>().material.color = new Color(0.2f, 0.9f, 0.7f, 0.5f);
-            zone.AddComponent<StrikePickupSpawner>();
+            var pickupZone = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pickupZone.name = "PickupZone";
+            pickupZone.transform.position = new Vector3(0f, 0.15f, 0f);
+            pickupZone.transform.localScale = new Vector3(4f, 0.2f, 4f);
+            var renderer = pickupZone.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.material.color = new Color(0.18f, 0.9f, 0.8f, 0.45f);
+            }
+            pickupZone.AddComponent<StrikePickupSpawner>();
         }
     }
 }

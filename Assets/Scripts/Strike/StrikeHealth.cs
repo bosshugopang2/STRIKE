@@ -6,75 +6,60 @@ namespace Strike
     {
         [SerializeField] private float damage = 25f;
         [SerializeField] private float fireRate = 0.12f;
-        [SerializeField] private float range = 50f;
+        [SerializeField] private float range = 60f;
         [SerializeField] private int clipSize = 30;
-        [SerializeField] private int currentAmmo = 30;
+        [SerializeField] private int ammo = 30;
         [SerializeField] private float reloadTime = 1.2f;
 
-        private float nextFireTime;
+        private float nextShotTime;
         private float reloadTimer;
-        private Camera playerCamera;
-        private Transform weaponOrigin;
-        private bool isReloading;
+        private bool reloadActive;
+        private Camera currentCamera;
 
         private void Update()
         {
-            if (playerCamera == null)
+            if (currentCamera == null)
             {
-                playerCamera = Camera.main;
+                currentCamera = Camera.main;
             }
 
-            if (StrikeInputManager.FirePressed() && Time.time >= nextFireTime)
+            if (StrikeInputManager.FirePressed() && Time.time >= nextShotTime)
             {
-                Fire();
+                TryFire();
             }
 
-            if (currentAmmo <= 0 && !isReloading)
+            if (ammo <= 0 && !reloadActive)
             {
-                StartReload();
+                BeginReload();
             }
 
-            if (isReloading)
+            if (reloadActive)
             {
                 reloadTimer -= Time.deltaTime;
                 if (reloadTimer <= 0f)
                 {
-                    FinishReload();
+                    CompleteReload();
                 }
             }
         }
 
-        public void SetWeaponOrigin(Transform origin)
+        public void TryFire()
         {
-            weaponOrigin = origin;
-        }
-
-        public string GetAmmoText()
-        {
-            return currentAmmo + "/" + clipSize;
-        }
-
-        private void Fire()
-        {
-            if (isReloading || currentAmmo <= 0)
+            if (reloadActive || ammo <= 0)
             {
                 return;
             }
 
-            currentAmmo--;
-            nextFireTime = Time.time + fireRate;
+            ammo--;
+            nextShotTime = Time.time + fireRate;
 
-            Vector3 rayOrigin = playerCamera != null ? playerCamera.transform.position : transform.position;
-            Vector3 rayDirection = playerCamera != null ? playerCamera.transform.forward : transform.forward;
+            Vector3 origin = currentCamera != null ? currentCamera.transform.position : transform.position;
+            Vector3 dir = currentCamera != null ? currentCamera.transform.forward : transform.forward;
 
-            if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, range))
+            if (Physics.Raycast(origin, dir, out RaycastHit hit, range))
             {
-                var target = hit.collider.GetComponent<StrikeTargetDummy>();
-                if (target != null)
-                {
-                    target.TakeDamage(damage);
-                }
-                else
+                var enemy = hit.collider.GetComponent<StrikeEnemyAI>();
+                if (enemy != null)
                 {
                     var health = hit.collider.GetComponent<StrikeHealth>();
                     if (health != null)
@@ -85,16 +70,18 @@ namespace Strike
             }
         }
 
-        private void StartReload()
+        public void BeginReload()
         {
-            isReloading = true;
+            reloadActive = true;
             reloadTimer = reloadTime;
         }
 
-        private void FinishReload()
+        public void CompleteReload()
         {
-            currentAmmo = clipSize;
-            isReloading = false;
+            ammo = clipSize;
+            reloadActive = false;
         }
+
+        public string AmmoText => ammo + "/" + clipSize;
     }
 }

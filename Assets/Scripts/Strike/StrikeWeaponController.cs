@@ -2,112 +2,69 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeWeaponController : MonoBehaviour
+    public class StrikeEnemyAI : MonoBehaviour
     {
-        [SerializeField] private float damage = 25f;
-        [SerializeField] private float fireRate = 0.12f;
-        [SerializeField] private float range = 50f;
-        [SerializeField] private int clipSize = 30;
-        [SerializeField] private int currentAmmo = 30;
-        [SerializeField] private float reloadTime = 1.2f;
+        [SerializeField] private float moveSpeed = 2.8f;
+        [SerializeField] private float attackRange = 1.8f;
+        [SerializeField] private float damage = 10f;
+        [SerializeField] private float attackCooldown = 1.2f;
+        [SerializeField] private float maxHealth = 60f;
 
-        private float nextFireTime;
-        private float reloadTimer;
-        private Camera playerCamera;
-        private Transform weaponOrigin;
-        private bool isReloading;
+        private CharacterController controller;
+        private GameObject player;
+        private float cooldownTimer;
+
+        private void Awake()
+        {
+            controller = GetComponent<CharacterController>();
+            var health = GetComponent<StrikeHealth>();
+            if (health == null)
+            {
+                health = gameObject.AddComponent<StrikeHealth>();
+            }
+            health.SetMaxHealth(maxHealth);
+        }
+
+        private void Start()
+        {
+            player = GameObject.FindWithTag("Player");
+        }
 
         private void Update()
         {
-            if (playerCamera == null)
+            if (player == null)
             {
-                playerCamera = Camera.main;
-            }
-
-            if (StrikeInputManager.FirePressed() && Time.time >= nextFireTime)
-            {
-                Fire();
-            }
-
-            if (currentAmmo <= 0 && !isReloading)
-            {
-                StartReload();
-            }
-
-            if (isReloading)
-            {
-                reloadTimer -= Time.deltaTime;
-                if (reloadTimer <= 0f)
-                {
-                    FinishReload();
-                }
-            }
-        }
-
-        public void SetWeaponOrigin(Transform origin)
-        {
-            weaponOrigin = origin;
-        }
-
-        public void FireForMobile()
-        {
-            if (Time.time >= nextFireTime)
-            {
-                Fire();
-            }
-        }
-
-        public string GetAmmoText()
-        {
-            return currentAmmo + "/" + clipSize;
-        }
-
-        private void Fire()
-        {
-            if (isReloading || currentAmmo <= 0)
-            {
+                player = GameObject.FindWithTag("Player");
                 return;
             }
 
-            currentAmmo--;
-            nextFireTime = Time.time + fireRate;
+            Vector3 toPlayer = player.transform.position - transform.position;
+            float distance = toPlayer.magnitude;
 
-            Vector3 rayOrigin = playerCamera != null ? playerCamera.transform.position : transform.position;
-            Vector3 rayDirection = playerCamera != null ? playerCamera.transform.forward : transform.forward;
-
-            if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, range))
+            if (distance > attackRange)
             {
-                var target = hit.collider.GetComponent<StrikeTargetDummy>();
-                if (target != null)
+                Vector3 moveDir = toPlayer.normalized;
+                controller.Move(moveDir * moveSpeed * Time.deltaTime);
+            }
+
+            if (distance <= attackRange)
+            {
+                cooldownTimer -= Time.deltaTime;
+                if (cooldownTimer <= 0f)
                 {
-                    target.TakeDamage(damage);
-                    var manager = FindObjectOfType<StrikeGameManager>();
-                    if (manager != null)
-                    {
-                        manager.RegisterEnemyDestroyed();
-                    }
-                }
-                else
-                {
-                    var health = hit.collider.GetComponent<StrikeHealth>();
-                    if (health != null)
-                    {
-                        health.TakeDamage(damage);
-                    }
+                    Attack();
+                    cooldownTimer = attackCooldown;
                 }
             }
         }
 
-        private void StartReload()
+        private void Attack()
         {
-            isReloading = true;
-            reloadTimer = reloadTime;
-        }
-
-        private void FinishReload()
-        {
-            currentAmmo = clipSize;
-            isReloading = false;
+            var health = player.GetComponent<StrikeHealth>();
+            if (health != null)
+            {
+                health.TakeDamage(damage);
+            }
         }
     }
 }

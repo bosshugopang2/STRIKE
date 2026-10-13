@@ -2,86 +2,26 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeWeaponSystem : MonoBehaviour
+    public class StrikeMainMenu : MonoBehaviour
     {
-        [SerializeField] private float damage = 25f;
-        [SerializeField] private float fireRate = 0.12f;
-        [SerializeField] private float range = 60f;
-        [SerializeField] private int clipSize = 30;
-        [SerializeField] private int ammo = 30;
-        [SerializeField] private float reloadTime = 1.2f;
-
-        private float nextShotTime;
-        private float reloadTimer;
-        private bool reloadActive;
-        private Camera currentCamera;
-
-        private void Update()
+        public void StartMatch()
         {
-            if (currentCamera == null)
+            var manager = FindObjectOfType<StrikeGameManager>();
+            if (manager != null)
             {
-                currentCamera = Camera.main;
+                manager.SetState(StrikeMatchState.Active);
             }
-
-            if (StrikeInputManager.FirePressed() && Time.time >= nextShotTime)
-            {
-                TryFire();
-            }
-
-            if (ammo <= 0 && !reloadActive)
-            {
-                BeginReload();
-            }
-
-            if (reloadActive)
-            {
-                reloadTimer -= Time.deltaTime;
-                if (reloadTimer <= 0f)
-                {
-                    CompleteReload();
-                }
-            }
+            Time.timeScale = 1f;
         }
 
-        public void TryFire()
+        public void TogglePause()
         {
-            if (reloadActive || ammo <= 0)
-            {
-                return;
-            }
-
-            ammo--;
-            nextShotTime = Time.time + fireRate;
-
-            Vector3 origin = currentCamera != null ? currentCamera.transform.position : transform.position;
-            Vector3 dir = currentCamera != null ? currentCamera.transform.forward : transform.forward;
-
-            if (Physics.Raycast(origin, dir, out RaycastHit hit, range))
-            {
-                var enemy = hit.collider.GetComponent<StrikeEnemyAI>();
-                if (enemy != null)
-                {
-                    var health = hit.collider.GetComponent<StrikeHealth>();
-                    if (health != null)
-                    {
-                        health.TakeDamage(damage);
-                    }
-                }
-            }
+            Time.timeScale = Time.timeScale == 0f ? 1f : 0f;
         }
 
-        public void BeginReload()
+        public void QuitGame()
         {
-            reloadActive = true;
-            reloadTimer = reloadTime;
+            Application.Quit();
         }
-
-        public void CompleteReload()
-        {
-            ammo = clipSize;
-            reloadActive = false;
-        }
-
-        public string AmmoText => ammo + "/" + clipSize;
     }
 }

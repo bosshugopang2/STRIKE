@@ -1,62 +1,73 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Strike
 {
-    public class StrikeLobbyManager : MonoBehaviour
+    public class StrikeResultsPanel : MonoBehaviour
     {
-        [SerializeField] private string lobbyName = "STRIKE Arena";
-        [SerializeField] private int maxPlayers = 8;
-        [SerializeField] private int requiredPlayersToStart = 1;
-        [SerializeField] private bool autoStart = true;
+        private Text titleText;
+        private Text summaryText;
 
-        private bool isLobbyOpen = true;
-        private float countdownTimer = 3f;
-
-        private void Update()
+        private void Awake()
         {
-            if (!isLobbyOpen)
+            SetupCanvas();
+            SetupText();
+            Hide();
+        }
+
+        public void Show(bool won, int score)
+        {
+            titleText.text = won ? "VICTORY" : "DEFEAT";
+            summaryText.text = "Score: " + score;
+            gameObject.SetActive(true);
+        }
+
+        public void Hide()
+        {
+            gameObject.SetActive(false);
+        }
+
+        private void SetupCanvas()
+        {
+            if (GetComponent<Canvas>() == null)
             {
-                return;
+                var canvas = gameObject.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             }
 
-            if (autoStart && GetConnectedPlayers() >= requiredPlayersToStart)
+            if (GetComponent<GraphicRaycaster>() == null)
             {
-                countdownTimer -= Time.deltaTime;
-                if (countdownTimer <= 0f)
-                {
-                    StartMatch();
-                }
-            }
-            else
-            {
-                countdownTimer = 3f;
+                gameObject.AddComponent<GraphicRaycaster>();
             }
         }
 
-        public void StartMatch()
+        private void SetupText()
         {
-            isLobbyOpen = false;
-            var manager = FindObjectOfType<StrikeGameManager>();
-            if (manager != null)
-            {
-                manager.SetState(StrikeMatchState.Active);
-            }
+            var titleObj = new GameObject("TitleText");
+            titleObj.transform.SetParent(transform);
+            var titleRect = titleObj.AddComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.5f, 0.5f);
+            titleRect.anchorMax = new Vector2(0.5f, 0.5f);
+            titleRect.sizeDelta = new Vector2(300f, 80f);
+            titleRect.anchoredPosition = new Vector2(0f, 40f);
+            titleText = titleObj.AddComponent<Text>();
+            titleText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            titleText.fontSize = 40;
+            titleText.alignment = TextAnchor.MiddleCenter;
+            titleText.color = Color.white;
 
-            Time.timeScale = 1f;
+            var summaryObj = new GameObject("SummaryText");
+            summaryObj.transform.SetParent(transform);
+            var summaryRect = summaryObj.AddComponent<RectTransform>();
+            summaryRect.anchorMin = new Vector2(0.5f, 0.5f);
+            summaryRect.anchorMax = new Vector2(0.5f, 0.5f);
+            summaryRect.sizeDelta = new Vector2(320f, 80f);
+            summaryRect.anchoredPosition = new Vector2(0f, -20f);
+            summaryText = summaryObj.AddComponent<Text>();
+            summaryText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            summaryText.fontSize = 24;
+            summaryText.alignment = TextAnchor.MiddleCenter;
+            summaryText.color = Color.white;
         }
-
-        public void LeaveLobby()
-        {
-            isLobbyOpen = false;
-            Time.timeScale = 0f;
-        }
-
-        public int GetConnectedPlayers()
-        {
-            return Mathf.Max(1, maxPlayers > 0 ? 1 : 1);
-        }
-
-        public string LobbyName => lobbyName;
-        public int MaxPlayers => maxPlayers;
     }
 }

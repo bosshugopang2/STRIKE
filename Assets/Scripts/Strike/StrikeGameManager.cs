@@ -2,94 +2,37 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeEnemyBot : MonoBehaviour
+    public class StrikeHealth : MonoBehaviour
     {
-        [SerializeField] private float moveSpeed = 2.5f;
-        [SerializeField] private float attackRange = 1.8f;
-        [SerializeField] private float attackDamage = 10f;
-        [SerializeField] private float attackCooldown = 1.2f;
-        [SerializeField] private float maxHealth = 50f;
+        [SerializeField] private float maxHealth = 100f;
+        [SerializeField] private float currentHealth = 100f;
 
-        private CharacterController controller;
-        private StrikeHealth health;
-        private GameObject player;
-        private float attackTimer;
+        public float CurrentHealth => currentHealth;
+        public float MaxHealth => maxHealth;
 
-        private void Awake()
+        public void SetMaxHealth(float value)
         {
-            controller = GetComponent<CharacterController>();
-            health = GetComponent<StrikeHealth>();
-            if (health == null)
-            {
-                health = gameObject.AddComponent<StrikeHealth>();
-            }
-
-            health.SetMaxHealth(maxHealth);
-            health.OnDeath += HandleDeath;
+            maxHealth = value;
+            currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
         }
 
-        private void Start()
+        public void TakeDamage(float amount)
         {
-            player = GameObject.FindWithTag("Player");
-            attackTimer = 0f;
-        }
+            currentHealth = Mathf.Max(0f, currentHealth - amount);
 
-        private void Update()
-        {
-            if (player == null)
+            if (currentHealth <= 0f && gameObject.CompareTag("Player"))
             {
-                player = GameObject.FindWithTag("Player");
-                return;
-            }
-
-            Vector3 toPlayer = player.transform.position - transform.position;
-            float distance = toPlayer.magnitude;
-
-            if (distance > 0.1f)
-            {
-                Vector3 desiredDirection = toPlayer.normalized;
-                if (distance > attackRange)
+                var manager = FindObjectOfType<StrikeGameManager>();
+                if (manager != null)
                 {
-                    Vector3 movement = desiredDirection * moveSpeed;
-                    movement.y = -2f;
-                    controller.Move(movement * Time.deltaTime);
-                }
-            }
-
-            if (distance <= attackRange)
-            {
-                attackTimer -= Time.deltaTime;
-                if (attackTimer <= 0f)
-                {
-                    AttackPlayer();
-                    attackTimer = attackCooldown;
+                    manager.RegisterPlayerDeath();
                 }
             }
         }
 
-        private void AttackPlayer()
+        public void Heal(float amount)
         {
-            if (player == null)
-            {
-                return;
-            }
-
-            var playerHealth = player.GetComponent<StrikeHealth>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(attackDamage);
-            }
-        }
-
-        private void HandleDeath(GameObject source)
-        {
-            var manager = FindObjectOfType<StrikeGameManager>();
-            if (manager != null)
-            {
-                manager.RegisterEnemyDestroyed();
-            }
-
-            Destroy(gameObject, 0.1f);
+            currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
         }
     }
 }

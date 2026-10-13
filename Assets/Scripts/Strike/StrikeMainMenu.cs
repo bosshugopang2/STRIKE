@@ -2,34 +2,45 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeMainMenu : MonoBehaviour
+    public class StrikeLobbyManager : MonoBehaviour
     {
-        [SerializeField] private string lobbyName = "STRIKE Arena";
-        [SerializeField] private int maxPlayers = 8;
+        [SerializeField] private string lobbyName = "STRIKE Lobby";
+        [SerializeField] private int requiredPlayers = 1;
+        [SerializeField] private bool lobbyOpen = true;
+        [SerializeField] private float countdown = 3f;
+
+        private void Update()
+        {
+            if (!lobbyOpen)
+            {
+                return;
+            }
+
+            if (GetPlayersConnected() >= requiredPlayers)
+            {
+                countdown -= Time.deltaTime;
+                if (countdown <= 0f)
+                {
+                    StartMatch();
+                }
+            }
+            else
+            {
+                countdown = 3f;
+            }
+        }
 
         public void StartMatch()
         {
+            lobbyOpen = false;
             var manager = FindObjectOfType<StrikeGameManager>();
             if (manager != null)
             {
                 manager.SetState(StrikeMatchState.Active);
             }
-
-            Time.timeScale = 1f;
         }
 
-        public void QuitGame()
-        {
-            Application.Quit();
-        }
-
-        public void TogglePause()
-        {
-            var menu = FindObjectOfType<StrikeMenuController>();
-            if (menu != null)
-            {
-                menu.TogglePause();
-            }
-        }
+        public int GetPlayersConnected() { return 1; }
+        public string LobbyNameValue => lobbyName;
     }
 }

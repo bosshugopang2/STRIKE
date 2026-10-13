@@ -1,26 +1,20 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Strike
 {
-    public class StrikeProximityWarning : MonoBehaviour
+    [CreateAssetMenu(fileName = "StrikeSettings", menuName = "STRIKE/Settings")]
+    public class StrikeSettings : ScriptableObject
     {
-        private Text warningText;
+        [SerializeField] private int maxBots = 6;
+        [SerializeField] private float matchDuration = 180f;
+        [SerializeField] private bool mobileControls = true;
+        [SerializeField] private bool webGlReady = true;
+        [SerializeField] private bool iosReady = true;
 
-        private void Awake()
-        {
-            var obj = new GameObject("WarningText");
-            obj.transform.SetParent(transform);
-            var rect = obj.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(320f, 80f);
-            warningText = obj.AddComponent<Text>();
-            warningText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            warningText.fontSize = 20;
-            warningText.alignment = TextAnchor.MiddleCenter;
-            warningText.color = Color.yellow;
-            warningText.text = "Enemy nearby";
-        }
+        public int MaxBots => maxBots;
+        public float MatchDuration => matchDuration;
+        public bool MobileControls => mobileControls;
+        public bool WebGlReady => webGlReady;
+        public bool IosReady => iosReady;
     }
 }

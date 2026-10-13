@@ -2,72 +2,81 @@ using UnityEngine;
 
 namespace Strike
 {
-    public class StrikeHealth : MonoBehaviour
+    public enum StrikeMatchState
     {
-        [SerializeField] private float maxHealth = 100f;
-        [SerializeField] private float currentHealth = 100f;
+        Waiting,
+        Active,
+        Won,
+        Lost
+    }
 
-        public delegate void HealthChanged(float current, float max);
-        public event HealthChanged OnHealthChanged;
+    public class StrikeGameManager : MonoBehaviour
+    {
+        [SerializeField] private StrikeMatchState matchState = StrikeMatchState.Active;
+        [SerializeField] private float roundTime = 180f;
+        [SerializeField] private int score;
 
-        public delegate void Died(GameObject source);
-        public event Died OnDeath;
+        private float elapsedTime;
+        private StrikeHUD hud;
 
         private void Start()
         {
-            currentHealth = maxHealth;
-            NotifyHealthChanged();
+            hud = FindObjectOfType<StrikeHUD>();
+            elapsedTime = 0f;
+            matchState = StrikeMatchState.Active;
+            UpdateHud();
         }
 
-        public void SetMaxHealth(float value)
+        private void Update()
         {
-            maxHealth = value;
-            currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
-            NotifyHealthChanged();
-        }
-
-        public void TakeDamage(float amount)
-        {
-            if (currentHealth <= 0f)
+            if (matchState != StrikeMatchState.Active)
             {
                 return;
             }
 
-            currentHealth = Mathf.Max(0f, currentHealth - amount);
-            NotifyHealthChanged();
-
-            if (currentHealth <= 0f)
+            elapsedTime += Time.deltaTime;
+            if (elapsedTime >= roundTime)
             {
-                Die();
+                SetState(StrikeMatchState.Won);
+            }
+
+            UpdateHud();
+        }
+
+        public void SetState(StrikeMatchState state)
+        {
+            matchState = state;
+            UpdateHud();
+        }
+
+        public StrikeMatchState MatchState => matchState;
+        public float TimeRemaining => Mathf.Max(0f, roundTime - elapsedTime);
+        public int Score => score;
+
+        public void RegisterPlayerDeath()
+        {
+            if (matchState == StrikeMatchState.Active)
+            {
+                SetState(StrikeMatchState.Lost);
             }
         }
 
-        public float CurrentHealth => currentHealth;
-        public float MaxHealth => maxHealth;
-
-        public void Heal(float amount)
+        public void RegisterEnemyDestroyed()
         {
-            currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
-            NotifyHealthChanged();
-        }
-
-        private void Die()
-        {
-            OnDeath?.Invoke(gameObject);
-
-            if (gameObject.CompareTag("Player"))
+            score += 100;
+            if (FindObjectsOfType<StrikeEnemyAI>().Length <= 0)
             {
-                var manager = FindObjectOfType<StrikeGameManager>();
-                if (manager != null)
-                {
-                    manager.RegisterPlayerDeath();
-                }
+                SetState(StrikeMatchState.Won);
             }
+            UpdateHud();
         }
 
-        private void NotifyHealthChanged()
+        private void UpdateHud()
         {
-            OnHealthChanged?.Invoke(currentHealth, maxHealth);
+            if (hud != null)
+            {
+                hud.UpdateDisplay(matchState, TimeRemaining, score);
+            }
         }
     }
 }
